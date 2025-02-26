@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -17,7 +19,7 @@ public class User {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "email", nullable = false, length = 100)
+    @Column(name = "email", nullable = false, length = 100, unique = true)
     private String email;
 
     @Column(name = "password", nullable = false, length = 100)
@@ -29,20 +31,19 @@ public class User {
     @Column(name = "otp_generated_time")
     private Instant otpGeneratedTime;
 
+    @Column(name = "otp_attempts", nullable = false)
     @ColumnDefault("0")
-    @Column(name = "otp_attempts")
-    private Integer otpAttempts;
+    private Integer otpAttempts = 0;
 
-    @ColumnDefault("0")
-    @Column(name = "is_verified")
-    private Boolean isVerified;
+    @Column(name = "is_verified", nullable = false)
+    @ColumnDefault("false")
+    private Boolean isVerified = false;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
-
 }

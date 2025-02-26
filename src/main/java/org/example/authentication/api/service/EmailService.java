@@ -12,6 +12,8 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    private static final String SENDER_EMAIL = "your_email@gmail.com";
+
     public void sendOtpEmail(String to, String otp) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -19,11 +21,11 @@ public class EmailService {
             message.setSubject("Your OTP Code");
             message.setText("Dear User,\n\nYour OTP is: " + otp
                     + "\nIt is valid for 10 minutes.\n\nRegards,\nYour Company");
-            message.setFrom("your_email@gmail.com");
+            message.setFrom(SENDER_EMAIL);
             mailSender.send(message);
         } catch (MailException e) {
-            // Log the error (Use a logger in a real-world application)
-            System.out.println("Error sending email: " + e.getMessage());
+            // Use a proper logger in real applications
+            System.err.println("Error sending email: " + e.getMessage());
         }
     }
 }

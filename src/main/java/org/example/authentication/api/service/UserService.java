@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Random;
 
@@ -35,7 +37,7 @@ public class UserService {
 
         String otp = generateOtp();
         newUser.setOtp(otp);
-        newUser.setOtpGeneratedTime(LocalDateTime.now());
+        newUser.setOtpGeneratedTime(Instant.now());
         newUser.setOtpAttempts(0);
         userRepository.save(newUser);
 
@@ -49,30 +51,26 @@ public class UserService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
-            // Check if the user is already verified
             if (user.getIsVerified()) {
                 return "User is already verified!";
             }
 
-            // Check OTP expiration
-            if (user.getOtpGeneratedTime().plusMinutes(OTP_EXPIRATION_MINUTES).isBefore(LocalDateTime.now())) {
+            if (user.getOtpGeneratedTime().plus(OTP_EXPIRATION_MINUTES, ChronoUnit.MINUTES).isBefore(Instant.now())) {
                 return "OTP expired! Please request a new one.";
             }
 
-            // Check OTP attempts
             if (user.getOtpAttempts() >= MAX_OTP_ATTEMPTS) {
                 return "Maximum OTP attempts exceeded! Please request a new one.";
             }
 
-            // Validate OTP
             if (user.getOtp().equals(otp)) {
                 user.setIsVerified(true);
-                user.setOtp(null); // Clear OTP after successful verification
-                user.setOtpAttempts(0); // Reset OTP attempts
+                user.setOtp(null);
+                user.setOtpAttempts(0);
                 userRepository.save(user);
                 return "Verification successful!";
             } else {
-                user.setOtpAttempts(user.getOtpAttempts() + 1); // Increment OTP attempts
+                user.setOtpAttempts(user.getOtpAttempts() + 1);
                 userRepository.save(user);
                 return "Invalid OTP!";
             }
@@ -80,8 +78,40 @@ public class UserService {
         return "User not found!";
     }
 
+    public String resendOtp(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            String otp = generateOtp();
+            user.setOtp(otp);
+            user.setOtpGeneratedTime(Instant.now());
+            userRepository.save(user);
+            emailService.sendOtpEmail(email, otp);
+            return "OTP resent successfully!";
+        }
+        return "User not found!";
+    }
+
+    public String sendPasswordResetOtp(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            return "User not found!";
+        }
+
+        User user = userOptional.get();
+        String otp = generateOtp();
+        user.setOtp(otp);
+        user.setOtpGeneratedTime(Instant.from(LocalDateTime.now()));
+        user.setOtpAttempts(0);
+        userRepository.save(user);
+
+        // Send OTP Email
+        emailService.sendOtpEmail(email, otp);
+        return "OTP for password reset sent! Check your email.";
+    }
+
+
     private String generateOtp() {
-        // Ensure OTP is 6 digits (e.g., 000123 instead of 123)
         return String.format("%06d", new Random().nextInt(999999));
     }
 }
