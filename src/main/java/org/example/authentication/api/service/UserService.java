@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Random;
@@ -51,7 +52,7 @@ public class UserService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
-            if (user.getIsVerified()) {
+            if (user.getVerified()) {
                 return "User is already verified!";
             }
 
@@ -64,7 +65,7 @@ public class UserService {
             }
 
             if (user.getOtp().equals(otp)) {
-                user.setIsVerified(true);
+                user.setVerified(true);
                 user.setOtp(null);
                 user.setOtpAttempts(0);
                 userRepository.save(user);
@@ -101,7 +102,7 @@ public class UserService {
         User user = userOptional.get();
         String otp = generateOtp();
         user.setOtp(otp);
-        user.setOtpGeneratedTime(Instant.from(LocalDateTime.now()));
+        user.setOtpGeneratedTime(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant());
         user.setOtpAttempts(0);
         userRepository.save(user);
 

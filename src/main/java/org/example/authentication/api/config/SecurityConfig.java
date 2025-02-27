@@ -18,7 +18,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Disable CSRF if not needed (New approach in Spring Security 6.x)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll() // Use requestMatchers() instead of antMatchers()
+                        //.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll() // Use requestMatchers() instead of antMatchers()
+                        .requestMatchers("/register", "/verify-otp", "/resend-otp", "/send-password-reset-otp").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
